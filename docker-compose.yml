@@ -1,0 +1,50 @@
+
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: secomp_backend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    command: npm run dev
+    environment:
+      DATABASE_URL: postgresql://postgresSECOMP:postgresSECOMP2026@db:5432/secomp?schema=public
+    depends_on:
+      db:
+        condition: service_started
+  
+  # frontend:
+  #   build: ./frontend
+  #   container_name: secomp_frontend
+  #   volumes:
+  #     - ./frontend/app
+  #   stdin_open: true
+  #   tty: true
+
+
+  db:
+    image: postgres:15
+    container_name: scomp_db
+    environment:
+      POSTGRES_USER: postgresSECOMP
+      POSTGRES_PASSWORD: postgresSECOMP2026
+      POSTGRES_DB: secomp
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    
+  docs:
+    build: ./docs
+    container_name: secomp-docs
+    ports:
+      - "8080:8080"
+
+
+volumes:
+    postgres_data:
