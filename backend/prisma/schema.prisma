@@ -13,11 +13,40 @@ datasource db {
   // url = env("DATABASE_URL")
 }
 
-// model User {
+model User {
+  user_id      String  @id @default(cuid())
+  full_name    String
+  course       String
+  registration String  @unique // matrícula
+  email        String  @unique
+  password     String
+  avatar_url   String?
 
-// }
+  palestrante Boolean   @default(false)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
 
-// model Event {
+  role Role @default(USER)
 
-// }
+  events_created Event[]
+}
 
+model Event {
+  event_id    String   @id @default(cuid())
+  title       String
+  description String
+  date        DateTime
+
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+  deleted_at Boolean  @default(false)
+
+  creator_id String
+  creator    User   @relation(fields: [creator_id], references: [user_id])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
