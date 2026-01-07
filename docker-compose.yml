@@ -18,13 +18,13 @@ services:
       db:
         condition: service_started
   
-  # frontend:
-  #   build: ./frontend
-  #   container_name: secomp_frontend
-  #   volumes:
-  #     - ./frontend/app
-  #   stdin_open: true
-  #   tty: true
+  frontend:
+    build: ./frontend
+    container_name: secomp_frontend
+    volumes:
+      - ./frontend/app
+    stdin_open: true
+    tty: true
 
 
   db:
