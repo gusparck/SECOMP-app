@@ -10,6 +10,8 @@ class App extends StatelessWidget {
     return MaterialApp(
       title: 'SECOMP',
       theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
       debugShowCheckedModeBanner: false,
       home: const LoginPage(),
     );
