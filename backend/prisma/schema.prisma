@@ -5,48 +5,97 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  // url = env("DATABASE_URL")
-}
-
-model User {
-  user_id      String  @id @default(cuid())
-  full_name    String
-  course       String
-  registration String  @unique // matrícula
-  email        String  @unique
-  password     String
-  avatar_url   String?
-
-  palestrante Boolean   @default(false)
-  created_at  DateTime  @default(now())
-  updated_at  DateTime  @updatedAt
-  deleted_at  DateTime?
-
-  role Role @default(USER)
-
-  events_created Event[]
-}
-
-model Event {
-  event_id    String   @id @default(cuid())
-  title       String
-  description String
-  date        DateTime
-
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now())
-  deleted_at Boolean  @default(false)
-
-  creator_id String
-  creator    User   @relation(fields: [creator_id], references: [user_id])
+  url      = env("DATABASE_URL")
 }
 
 enum Role {
-  USER
-  ADMIN
+  USER // aluno / participante
+  ADMIN // organizador
+}
+
+enum ParticipationStatus {
+  CONFIRMED
+  WAITING
+  CANCELLED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  registration String   @unique
+  password     String
+  role         Role     @default(USER)
+  course       String?
+  campus       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relações
+  organizedEvents Event[]            @relation("UserOrganizedEvents")
+  speakingEvents  EventSpeaker[]
+  participatingIn EventParticipant[]
+  questions       Question[]
+}
+
+model Event {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  date        DateTime
+  location    String?
+  capacity    Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Organizador
+  organizerId String
+  organizer   User   @relation("UserOrganizedEvents", fields: [organizerId], references: [id])
+
+  // Relações
+  speakers     EventSpeaker[]
+  participants EventParticipant[]
+  questions    Question[]
+}
+
+model EventSpeaker {
+  eventId String
+  userId  String
+
+  event Event @relation(fields: [eventId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@id([eventId, userId])
+}
+
+model EventParticipant {
+  id        String              @id @default(uuid())
+  eventId   String
+  userId    String
+  status    ParticipationStatus @default(CONFIRMED)
+  checkedIn Boolean             @default(false)
+  createdAt DateTime            @default(now())
+
+  event Event @relation(fields: [eventId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@unique([eventId, userId])
+}
+
+model Question {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+
+  eventId String
+  userId  String
+
+  event Event @relation(fields: [eventId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
 }
