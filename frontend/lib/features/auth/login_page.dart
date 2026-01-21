@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/ui/backgrounds/gradient_background.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -7,18 +8,20 @@ class LoginPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Login')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            TextField(decoration: const InputDecoration(labelText: 'Email')),
-            TextField(
-              decoration: const InputDecoration(labelText: 'Senha'),
-              obscureText: true,
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(onPressed: () {}, child: const Text('Entrar')),
-          ],
+      body: GradientBackground(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              TextField(decoration: const InputDecoration(labelText: 'Email')),
+              TextField(
+                decoration: const InputDecoration(labelText: 'Senha'),
+                obscureText: true,
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(onPressed: () {}, child: const Text('Entrar')),
+            ],
+          ),
         ),
       ),
     );

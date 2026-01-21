@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/features/welcome/welcome_page.dart';
 import 'core/theme/app_theme.dart';
-import 'features/auth/login_page.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -13,7 +13,7 @@ class App extends StatelessWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
       debugShowCheckedModeBanner: false,
-      home: const LoginPage(),
+      home: const WelcomePage(),
     );
   }
 }
