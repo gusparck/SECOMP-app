@@ -20,7 +20,7 @@ services:
     build: ./frontend
     container_name: secomp_frontend
     volumes:
-      - ./frontend/app
+      - ./frontend:/app
     stdin_open: true
     tty: true
 
