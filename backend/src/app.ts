@@ -1,16 +1,10 @@
 import express from 'express';
-import dotenv from 'dotenv';
-import type { Request, Response } from 'express';
-
-dotenv.config();
+import userRouter from "./routes/userRoutes";
 
 const app = express();
-const port = process.env.PORT || 3000;
 
-app.get('/', (req: Request, res: Response) => {
-  res.send('Backend is running!');
-});
+app.use(express.json());
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+app.use("/api/user", userRouter)
+
+export default app
