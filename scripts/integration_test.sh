@@ -8,9 +8,24 @@ echo "🚀 Starting Integration Tests Environment..."
 # Ensure we are in the project root
 cd "$(dirname "$0")/.."
 
-# Start Backend and DB
-echo "🐳 Starting Backend and Database containers..."
-docker compose up -d backend db
+# Start DB first
+echo "🐳 Starting Database..."
+docker compose up -d db
+
+# Wait for DB to be ready
+echo "⏳ Waiting for Database to be ready..."
+until docker compose exec db pg_isready -U postgresSECOMP; do
+  echo "Waiting for db..."
+  sleep 2
+done
+
+# Run Migrations
+echo "🔄 Running Database Migrations..."
+docker compose run --rm backend npx prisma migrate deploy
+
+# Start Backend
+echo "🐳 Starting Backend..."
+docker compose up -d backend
 
 # Wait for Backend to be ready
 echo "⏳ Waiting for Backend to be ready..."

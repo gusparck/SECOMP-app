@@ -7,12 +7,21 @@ const userService = new UserService();
 const createUserSchema = z.object({
     name: z.string().min(1, "O nome é obrigatório."),
     email: z.string().email({ message: "Formato do e-mail é inválido" }),
-    registration: z.string().min(1, "A matrícula é obrigatória."),
-    password: z.string().regex(/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,}$/,
-        "Senha fraca: Precisa de 8 caracteres, número e símbolo especial."),
+    registration: z.string().regex(/^\d{2}\.\d\.\d{4}$/, "Formato inválido. Use 00.0.0000"),
+    password: z.string()
+        .min(6, "Senha fraca")
+        .regex(/[a-z]/, "Senha fraca")
+        .regex(/[A-Z]/, "Senha fraca")
+        .regex(/\d/, "Senha fraca")
+        .regex(/[@$!%*?&]/, "Senha fraca"),
     course: z.string().optional(),
     campus: z.string().optional()
 })
+
+const loginUserSchema = z.object({
+    email: z.string().email("E-mail inválido"),
+    password: z.string().min(1, "Senha obrigatória")
+});
 
 export const UserController = {
     async create(req: Request, res: Response) {
@@ -22,7 +31,7 @@ export const UserController = {
             if (!validation.success) {
                 return res.status(400).json({
                     success: false,
-                    message: "Campos obrigatórios faltando: nome, email, senha e matrícula são necessários.",
+                    message: "Dados inválidos. Verifique os campos.",
                     errors: validation.error.format()
                 });
             }
@@ -46,6 +55,43 @@ export const UserController = {
                     });
                 }
 
+                return res.status(500).json({
+                    success: false,
+                    message: error.message
+                });
+            }
+            return res.status(500).json({ success: false, message: "Erro interno." });
+        }
+    },
+
+    async login(req: Request, res: Response) {
+        try {
+            const validation = loginUserSchema.safeParse(req.body);
+
+            if (!validation.success) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Dados de login inválidos.",
+                    errors: validation.error.format()
+                });
+            }
+
+            const result = await userService.login(validation.data);
+
+            return res.status(200).json({
+                success: true,
+                message: "Login realizado com sucesso.",
+                data: result
+            });
+
+        } catch (error) {
+            if (error instanceof Error) {
+                if (error.message === "INVALID_CREDENTIALS") {
+                    return res.status(401).json({
+                        success: false,
+                        message: "E-mail ou senha incorretos."
+                    });
+                }
                 return res.status(500).json({
                     success: false,
                     message: error.message
