@@ -7,4 +7,8 @@ app.use(express.json());
 
 app.use("/api/user", userRouter)
 
+app.get("/health", (req, res) => {
+    res.status(200).json({ status: 'ok' });
+});
+
 export default app
