@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class CustomTextFormField extends StatelessWidget {
   final TextEditingController controller;
@@ -9,6 +10,9 @@ class CustomTextFormField extends StatelessWidget {
   final String? Function(String?)? validator;
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onFieldSubmitted;
+  final String? errorText;
+  final ValueChanged<String>? onChanged;
+  final List<TextInputFormatter>? inputFormatters;
 
   const CustomTextFormField({
     super.key,
@@ -20,6 +24,9 @@ class CustomTextFormField extends StatelessWidget {
     this.validator,
     this.textInputAction,
     this.onFieldSubmitted,
+    this.errorText,
+    this.onChanged,
+    this.inputFormatters,
   });
 
   @override
@@ -31,6 +38,8 @@ class CustomTextFormField extends StatelessWidget {
       validator: validator,
       textInputAction: textInputAction,
       onFieldSubmitted: onFieldSubmitted,
+      onChanged: onChanged,
+      inputFormatters: inputFormatters,
       style: const TextStyle(
         fontSize: 16,
         color: Color(0xFF334155), // Slate 700
@@ -49,6 +58,7 @@ class CustomTextFormField extends StatelessWidget {
         prefixIcon: icon != null
             ? Icon(icon, color: const Color(0xFF64748B)) // Slate 500
             : null,
+        errorText: errorText,
         errorStyle: const TextStyle(
           color: Colors.redAccent,
           fontWeight: FontWeight.w600,
