@@ -1,27 +1,26 @@
 import 'package:flutter/material.dart';
+import '../../events/event_model.dart';
 
 class EventCard extends StatelessWidget {
-  final String title;
-  final String type; // e.g., 'Palestra', 'Workshop'
-  final String time;
-  final String speaker;
-  final String location;
+  final EventModel event;
+  final VoidCallback onTap;
 
   const EventCard({
     super.key,
-    required this.title,
-    required this.type,
-    required this.time,
-    required this.speaker,
-    required this.location,
+    required this.event,
+    required this.onTap,
   });
 
   Color _getTypeColor() {
-    switch (type.toLowerCase()) {
-      case 'workshop':
+    switch (event.type) {
+      case EventType.workshop:
         return Colors.orangeAccent;
-      case 'palestra':
+      case EventType.palestra:
         return Colors.indigoAccent;
+      case EventType.minicurso:
+        return Colors.purpleAccent;
+      case EventType.mesaRedonda:
+        return Colors.redAccent;
       default:
         return Colors.teal;
     }
@@ -45,7 +44,7 @@ class EventCard extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {}, // Detail view could go here
+          onTap: onTap,
           borderRadius: BorderRadius.circular(20),
           child: Padding(
             padding: const EdgeInsets.all(20),
@@ -65,7 +64,7 @@ class EventCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(100),
                       ),
                       child: Text(
-                        type,
+                        event.type.label,
                         style: TextStyle(
                           color: _getTypeColor(),
                           fontWeight: FontWeight.bold,
@@ -73,19 +72,32 @@ class EventCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    Text(
-                      time,
-                      style: TextStyle(
-                        color: Colors.grey[500],
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    Row(
+                      children: [
+                        if (event.isUserSubscribed)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: Icon(
+                              Icons.check_circle,
+                              color: Colors.green,
+                              size: 16,
+                            ),
+                          ),
+                        Text(
+                          event.timeRange,
+                          style: TextStyle(
+                            color: Colors.grey[500],
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  title,
+                  event.title,
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -99,7 +111,7 @@ class EventCard extends StatelessWidget {
                     const Icon(Icons.person, size: 16, color: Colors.grey),
                     const SizedBox(width: 4),
                     Text(
-                      speaker,
+                      event.speaker,
                       style: const TextStyle(
                         color: Color(0xFF64748B), // Slate 500
                         fontSize: 14,
@@ -109,7 +121,7 @@ class EventCard extends StatelessWidget {
                     const Icon(Icons.location_on, size: 16, color: Colors.grey),
                     const SizedBox(width: 4),
                     Text(
-                      location,
+                      event.location,
                       style: const TextStyle(
                         color: Color(0xFF64748B), // Slate 500
                         fontSize: 14,

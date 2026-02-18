@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../core/ui/backgrounds/gradient_background.dart';
 import '../../shared/models/user_model.dart';
+import '../events/event_service.dart';
+import '../events/event_create_page.dart';
+import '../events/event_details_page.dart';
 import '../welcome/welcome_page.dart';
 import 'widgets/event_card.dart';
 
@@ -20,9 +23,21 @@ class LoggedUserHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: user.role == Role.ADMIN
+          ? FloatingActionButton(
+              onPressed: () {
+                // Navigate to create event page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const EventCreatePage()),
+                );
+              },
+              backgroundColor: const Color(0xFF1E3C72),
+              child: const Icon(Icons.add, color: Colors.white),
+            )
+          : null,
       body: GradientBackground(
         child: SafeArea(
-          // Ensure content avoids notches
           bottom: false,
           child: Column(
             children: [
@@ -98,38 +113,36 @@ class LoggedUserHomePage extends StatelessWidget {
                           ),
                         ),
                         Expanded(
-                          child: ListView(
-                            padding: const EdgeInsets.only(bottom: 24),
-                            children: const [
-                              EventCard(
-                                title: 'Inteligência Artificial Generativa',
-                                type: 'Palestra',
-                                time: '09:00 - 10:30',
-                                speaker: 'Dra. Ana Silva',
-                                location: 'Auditório A',
-                              ),
-                              EventCard(
-                                title: 'Desenvolvimento Mobile com Flutter',
-                                type: 'Workshop',
-                                time: '11:00 - 12:30',
-                                speaker: 'Pedro Alcantara',
-                                location: 'Lab 3',
-                              ),
-                              EventCard(
-                                title: 'O Futuro da Cibersegurança',
-                                type: 'Palestra',
-                                time: '14:00 - 15:30',
-                                speaker: 'Carlos Santos',
-                                location: 'Auditório B',
-                              ),
-                              EventCard(
-                                title: 'Blockchain na Prática',
-                                type: 'Workshop',
-                                time: '16:00 - 18:00',
-                                speaker: 'Marcos Oliveira',
-                                location: 'Lab 2',
-                              ),
-                            ],
+                          child: ListenableBuilder(
+                            listenable: EventService(),
+                            builder: (context, child) {
+                              final events = EventService().events;
+                              if (events.isEmpty) {
+                                return const Center(
+                                  child: Text('Nenhum evento encontrado'),
+                                );
+                              }
+                              return ListView.builder(
+                                padding: const EdgeInsets.only(bottom: 80),
+                                itemCount: events.length,
+                                itemBuilder: (context, index) {
+                                  final event = events[index];
+                                  return EventCard(
+                                    event: event,
+                                    onTap: () {
+                                      // Navigate to details
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              EventDetailsPage(event: event),
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                              );
+                            },
                           ),
                         ),
                       ],
