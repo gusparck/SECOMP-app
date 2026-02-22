@@ -23,7 +23,23 @@ class AppTheme {
   static ThemeData darkTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
-    colorSchemeSeed: Colors.indigo,
+    colorScheme: const ColorScheme.dark(
+      primary: Color(0xFF6366F1), // Indigo 500
+      onPrimary: Colors.white,
+      primaryContainer: Color(0xFF3730A3),
+      onPrimaryContainer: Color(0xFFE0E7FF),
+      secondary: Color(0xFF38BDF8),
+      onSecondary: Colors.black,
+      secondaryContainer: Color(0xFF0284C7),
+      onSecondaryContainer: Color(0xFFE0F2FE),
+      surface: Color(0xFF1E293B), // Slate 800
+      onSurface: Color(0xFFF8FAFC), // Slate 50
+      error: Color(0xFFEF4444),
+      onError: Colors.white,
+    ),
+    scaffoldBackgroundColor: const Color(0xFF0F172A), // Slate 900
+    cardColor: const Color(0xFF1E293B), // Slate 800
+    dividerColor: const Color(0xFF334155), // Slate 700
     extensions: const [
       AppColors(
         primary: Color(0xFF90CAF9),

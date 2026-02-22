@@ -1,107 +1,226 @@
-import 'dart:async';
-import 'package:flutter/foundation.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../features/auth/auth_service.dart';
 import 'event_model.dart';
+import '../../shared/models/user_model.dart';
 
-class EventService extends ChangeNotifier {
-  // Singleton pattern for simple state management
-  static final EventService _instance = EventService._internal();
+class EventService {
+  // Use 10.0.2.2 for Android Emulator, or local IP for physical device
+  static const String _baseUrl = 'http://192.168.1.41:3000/api/events';
 
-  factory EventService() {
-    return _instance;
+  final AuthService _authService = AuthService();
+
+  Future<String?> _getToken() async {
+    return await _authService.getToken();
   }
 
-  EventService._internal();
+  Future<List<EventModel>> getEvents({
+    int page = 1,
+    int limit = 10,
+    String? search,
+    bool myEvents = false, // Subscribed events
+    bool myCreations = false, // Created events
+    bool teamEvents = false, // Team member events
+  }) async {
+    final token = await _getToken();
+    String query = '?page=$page&limit=$limit';
+    if (search != null && search.isNotEmpty) {
+      query += '&search=$search';
+    }
+    if (myEvents) {
+      query += '&user=me';
+    }
+    if (myCreations) {
+      query += '&organizer=me';
+    }
+    if (teamEvents) {
+      query += '&speaker=me';
+    }
 
-  final List<EventModel> _events = [
-    EventModel(
-      id: '1',
-      title: 'Inteligência Artificial Generativa',
-      description:
-          'Explorando o potencial criativo e as aplicações práticas da IA Generativa no desenvolvimento de software e criação de conteúdo.',
-      type: EventType.palestra,
-      speaker: 'Dra. Ana Silva',
-      location: 'Auditório A',
-      startTime: DateTime.now().add(const Duration(days: 1, hours: 9)),
-      endTime:
-          DateTime.now().add(const Duration(days: 1, hours: 10, minutes: 30)),
-      maxCapacity: 100,
-      currentParticipants: 85,
-      isUserSubscribed: true,
-    ),
-    EventModel(
-      id: '2',
-      title: 'Desenvolvimento Mobile com Flutter',
-      description:
-          'Aprenda a construir aplicativos multiplataforma performáticos e bonitos com o framework do Google.',
-      type: EventType.workshop,
-      speaker: 'Pedro Alcantara',
-      location: 'Lab 3',
-      startTime: DateTime.now().add(const Duration(days: 1, hours: 11)),
-      endTime:
-          DateTime.now().add(const Duration(days: 1, hours: 12, minutes: 30)),
-      maxCapacity: 30,
-      currentParticipants: 28,
-      isUserSubscribed: false,
-    ),
-    EventModel(
-      id: '3',
-      title: 'O Futuro da Cibersegurança',
-      description:
-          'Tendências, desafios e carreiras em segurança da informação.',
-      type: EventType.palestra,
-      speaker: 'Carlos Santos',
-      location: 'Auditório B',
-      startTime: DateTime.now().add(const Duration(days: 1, hours: 14)),
-      endTime:
-          DateTime.now().add(const Duration(days: 1, hours: 15, minutes: 30)),
-      maxCapacity: 100,
-      currentParticipants: 45,
-      isUserSubscribed: false,
-    ),
-    EventModel(
-      id: '4',
-      title: 'Blockchain na Prática',
-      description:
-          'Construindo smart contracts e aplicações descentralizadas (dApps).',
-      type: EventType.minicurso,
-      speaker: 'Marcos Oliveira',
-      location: 'Lab 2',
-      startTime: DateTime.now().add(const Duration(days: 1, hours: 16)),
-      endTime: DateTime.now().add(const Duration(days: 1, hours: 18)),
-      maxCapacity: 25,
-      currentParticipants: 10,
-      isUserSubscribed: false,
-    ),
-  ];
+    final response = await http.get(
+      Uri.parse('$_baseUrl$query'),
+      headers: token != null
+          ? {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            }
+          : null,
+    );
 
-  List<EventModel> get events => List.unmodifiable(_events);
-
-  Future<void> createEvent(EventModel event) async {
-    // Simulate network delay
-    await Future.delayed(const Duration(seconds: 1));
-    _events.add(event);
-    notifyListeners();
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final List eventsJson = data['data'];
+      return eventsJson.map((json) => EventModel.fromJson(json)).toList();
+    } else {
+      throw Exception('Falha ao carregar eventos');
+    }
   }
 
-  Future<void> toggleSubscription(String eventId) async {
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 500));
+  Future<List<EventModel>> getUserEvents() async {
+    final token = await _getToken();
+    if (token == null) throw Exception('Usuário não autenticado');
 
-    final index = _events.indexWhere((e) => e.id == eventId);
-    if (index != -1) {
-      final event = _events[index];
-      final newStatus = !event.isUserSubscribed;
+    final response = await http.get(
+      Uri.parse('$_baseUrl?user=me'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
 
-      // Update participant count
-      final newCount = newStatus
-          ? event.currentParticipants + 1
-          : event.currentParticipants - 1;
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final List eventsJson = data['data'];
+      return eventsJson.map((json) => EventModel.fromJson(json)).toList();
+    } else {
+      throw Exception('Falha ao carregar suas inscrições');
+    }
+  }
 
-      _events[index] = event.copyWith(
-        isUserSubscribed: newStatus,
-        currentParticipants: newCount,
-      );
-      notifyListeners();
+  Future<List<EventModel>> getCreatedEvents() async {
+    final token = await _getToken();
+    if (token == null) throw Exception('Usuário não autenticado');
+
+    final response = await http.get(
+      Uri.parse('$_baseUrl?organizer=me'), // Fetch created events
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final List events = data['data'];
+      return events.map((e) => EventModel.fromJson(e)).toList();
+    } else {
+      throw Exception('Falha ao carregar seus eventos criados');
+    }
+  }
+
+  Future<List<EventModel>> getTeamEvents() async {
+    final token = await _getToken();
+    if (token == null) throw Exception('Usuário não autenticado');
+
+    final response = await http.get(
+      Uri.parse('$_baseUrl?speaker=me'), // Fetch team events
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final List events = data['data'];
+      return events.map((e) => EventModel.fromJson(e)).toList();
+    } else {
+      throw Exception('Falha ao carregar eventos da equipe');
+    }
+  }
+
+  Future<EventModel> getEventById(String id) async {
+    final response = await http.get(Uri.parse('$_baseUrl/$id'));
+
+    if (response.statusCode == 200) {
+      return EventModel.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Falha ao carregar detalhes do evento');
+    }
+  }
+
+  Future<EventModel> createEvent(EventModel event) async {
+    final token = await _getToken();
+    if (token == null) throw Exception('Usuário não autenticado');
+
+    final response = await http.post(
+      Uri.parse(_baseUrl),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'title': event.title,
+        'description': event.description,
+        'date': event.date.toIso8601String(),
+        'location': event.location,
+        'capacity': event.capacity,
+        'organizerId': event
+            .organizerId, // Usually handled by backend from token, but validated in schema
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      return EventModel.fromJson(jsonDecode(response.body));
+    } else {
+      final data = jsonDecode(response.body);
+      throw Exception(data['message'] ?? 'Falha ao criar evento');
+    }
+  }
+
+  Future<void> subscribe(String eventId) async {
+    final token = await _getToken();
+    final user = await _authService.getUser();
+
+    if (token == null || user == null)
+      throw Exception('Usuário não autenticado');
+
+    final response = await http.post(
+      Uri.parse('$_baseUrl/register'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'eventId': eventId,
+        'userId': user.id,
+      }),
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      final data = jsonDecode(response.body);
+      throw Exception(data['message'] ?? 'Falha na inscrição');
+    }
+  }
+
+  Future<void> addSpeaker(String eventId, String registration) async {
+    final token = await _getToken();
+    if (token == null) throw Exception('Usuário não autenticado');
+
+    final response = await http.post(
+      Uri.parse('$_baseUrl/$eventId/speakers'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'registration': registration}),
+    );
+
+    if (response.statusCode != 201) {
+      final data = jsonDecode(response.body);
+      throw Exception(data['message'] ?? 'Falha ao adicionar integrante');
+    }
+  }
+
+  Future<Map<String, dynamic>> checkIn(String eventId, String userId) async {
+    final token = await _getToken();
+    if (token == null) throw Exception('Usuário não autenticado');
+
+    final response = await http.post(
+      Uri.parse('$_baseUrl/$eventId/checkin'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'userId': userId}),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      final data = jsonDecode(response.body);
+      throw Exception(data['message'] ?? 'Falha ao realizar check-in');
     }
   }
 }
