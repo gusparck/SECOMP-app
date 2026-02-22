@@ -12,6 +12,7 @@ services:
     command: npm run dev
     environment:
       DATABASE_URL: postgresql://postgresSECOMP:postgresSECOMP2026@db:5432/secomp?schema=public
+      JWT_SECRET: secomp_secret_key_2026
     depends_on:
       db:
         condition: service_started

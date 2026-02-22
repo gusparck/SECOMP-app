@@ -31,6 +31,10 @@ class _GradientBackgroundState extends State<GradientBackground>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final color1 = isDark ? const Color(0xFF0F172A) : const Color(0xFF1E3C72);
+    final color2 = isDark ? const Color(0xFF1E293B) : const Color(0xFF2A5298);
+
     return AnimatedBuilder(
       animation: _controller,
       builder: (_, __) {
@@ -42,16 +46,8 @@ class _GradientBackgroundState extends State<GradientBackground>
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Color.lerp(
-                      const Color(0xFF1E3C72),
-                      const Color(0xFF2A5298),
-                      _controller.value,
-                    )!,
-                    Color.lerp(
-                      const Color(0xFF2A5298),
-                      const Color(0xFF1E3C72),
-                      _controller.value,
-                    )!,
+                    Color.lerp(color1, color2, _controller.value)!,
+                    Color.lerp(color2, color1, _controller.value)!,
                   ],
                 ),
               ),
